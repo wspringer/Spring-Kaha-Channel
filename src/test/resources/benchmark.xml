@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:si="http://www.springframework.org/schema/integration"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-1.0.xsd">
+
+    <bean id="kaha-channel" class="nl.flotsam.spring.integration.kaha.KahaChannelFactory">
+        <property name="directory">
+            <bean factory-bean="temporary-folder" factory-method="getRoot"/>
+        </property>
+    </bean>
+
+    <si:channel id="regular-channel">
+        <si:queue capacity="1101"/>
+    </si:channel>
+
+    <si:poller default="true">
+        <si:interval-trigger interval="500"/>
+    </si:poller>
+
+    <si:service-activator id="kaha-activator"
+                          input-channel="kaha-channel"
+                          ref="listener"
+                          method="receive"/>
+
+    <si:service-activator id="regular-activator"
+                          input-channel="regular-channel"
+                          ref="listener"
+                          method="receive"/>
+
+    <bean id="listener" class="nl.flotsam.spring.integration.kaha.Logger">
+        <constructor-arg>
+            <value>10000</value>
+        </constructor-arg>
+    </bean>
+
+    <bean id="temporary-folder"
+          class="org.junit.rules.TemporaryFolder"
+          init-method="create"
+          destroy-method="delete"/>
+
+</beans>
